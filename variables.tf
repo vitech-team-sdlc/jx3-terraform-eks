@@ -9,7 +9,7 @@ variable "region" {
 variable "cluster_version" {
   description = "Kubernetes version to use for the EKS cluster."
   type        = string
-  default     = "1.17"
+  default     = "1.20"
 }
 
 variable "vault_user" {
@@ -21,19 +21,12 @@ variable "vault_user" {
 variable "cluster_name" {
   description = "Name of the Kubernetes cluster to create"
   type        = string
-  default     = ""
 }
 
 variable "force_destroy" {
   description = "Flag to determine whether storage buckets get forcefully destroyed. If set to false, empty the bucket first in the aws s3 console, else terraform destroy will fail with BucketNotEmpty error"
   type        = bool
   default     = false
-}
-
-variable "is_jx2" {
-  default     = false
-  type        = bool
-  description = "Flag to specify if jx2 related resources need to be created"
 }
 
 variable "jx_git_url" {
@@ -49,4 +42,78 @@ variable "jx_bot_username" {
 variable "jx_bot_token" {
   description = "Bot token used to interact with the Jenkins X cluster git repository"
   type        = string
+}
+
+variable "volume_size" {
+  type    = string
+  default = 100
+}
+
+variable "desired_node_count" {
+  description = "The number of worker nodes to use for the cluster"
+  type        = number
+  default     = 3
+}
+
+variable "min_node_count" {
+  description = "The minimum number of worker nodes to use for the cluster"
+  type        = number
+  default     = 3
+}
+
+variable "max_node_count" {
+  description = "The maximum number of worker nodes to use for the cluster"
+  type        = number
+  default     = 5
+}
+
+variable "node_machine_type" {
+  description = "The instance type to use for the cluster's worker nodes"
+  type        = string
+  default     = "m5.large"
+}
+
+// ----------------------------------------------------------------------------
+// External DNS Variables
+// ----------------------------------------------------------------------------
+variable "enable_external_dns" {
+  description = "Flag to enable or disable External DNS in the final `jx-requirements.yml` file"
+  type        = bool
+  default     = true
+}
+
+variable "apex_domain" {
+  description = "The main domain to either use directly or to configure a subdomain from"
+  type        = string
+  default     = ""
+}
+
+variable "subdomain" {
+  description = "The subdomain to be added to the apex domain. If subdomain is set, it will be appended to the apex domain in  `jx-requirements-eks.yml` file"
+  type        = string
+  default     = ""
+}
+
+variable "tls_email" {
+  description = "The email to register the LetsEncrypt certificate with. Added to the `jx-requirements.yml` file"
+  type        = string
+  default     = ""
+}
+
+variable "create_and_configure_subdomain" {
+  description = "Flag to create an NS record set for the subdomain in the apex domain's Hosted Zone"
+  type        = bool
+  default     = false
+}
+
+variable "enable_tls" {
+  description = "Flag to enable TLS in the final `jx-requirements.yml` file"
+  type        = bool
+  default     = false
+}
+
+variable "lets_encrypt_production" {
+  description = "Flag to use the production environment of letsencrypt in the `jx-requirements.yml` file"
+  type        = bool
+  default     = false
 }
