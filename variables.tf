@@ -3,7 +3,12 @@
 // ----------------------------------------------------------------------------
 variable "region" {
   description = "AWS region code for creating resources."
-  type = string
+  type        = string
+}
+
+variable "profile" {
+  description = "Profile stored in aws config or credentials file"
+  type        = string
 }
 
 variable "cluster_version" {
@@ -116,4 +121,17 @@ variable "lets_encrypt_production" {
   description = "Flag to use the production environment of letsencrypt in the `jx-requirements.yml` file"
   type        = bool
   default     = false
+}
+
+
+variable "nginx_chart_version" {
+  type        = string
+  description = "nginx chart version"
+  default     = "3.12.0"
+}
+
+variable "install_kuberhealthy" {
+  description = "Flag to specify if kuberhealthy operator should be installed"
+  type        = bool
+  default     = true
 }
