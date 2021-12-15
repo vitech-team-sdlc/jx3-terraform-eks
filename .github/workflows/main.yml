@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Confingure S3 and Infra
+name: Confingure S3 and apply Infra
 
 on:
 
@@ -12,10 +12,10 @@ on:
       awsRegion:
         required: true
         type: string
-      destroyInfra:
+      applyInfra:
         required: true
         type: boolean
-      applyInfra:
+      destroyInfra:
         required: true
         type: boolean
 
@@ -83,18 +83,18 @@ jobs:
 
       - name: "Terraform plan"
         id: plan
-        run: terraform plan -lock=true -out=plan_to_apply -var jx_bot_token=${{ secrets.GITHUB_TOKEN }}
+        run: terraform plan -lock=true -out=plan_to_apply -var=jx_bot_token=${{ secrets.ACCESS_TOKEN }}
         working-directory: ${{ env.working-directory }}
 
       - name: "Terraform apply"
         if:  ${{ github.event.inputs.applyInfra == 'true'}}
         id: apply
-        run: terraform apply plan_to_apply -var jx_bot_token=${{ secrets.GITHUB_TOKEN }}
+        run: terraform apply plan_to_apply
         working-directory: ${{ env.working-directory }}
 
       - name: "Terraform destroy"
         if:  ${{ github.event.inputs.destroyInfra == 'true' }}
         id: destroy
-        run: terraform destroy -auto-approve=true -var jx_bot_token=${{ secrets.GITHUB_TOKEN }}
+        run: terraform destroy -auto-approve=true -var=jx_bot_token=${{ secrets.ACCESS_TOKEN }}
         working-directory: ${{ env.working-directory }}
 
