@@ -6,9 +6,6 @@ on:
 
   workflow_dispatch:
     inputs:
-      bucketName:
-        required: true
-        type: string
       awsRegion:
         required: true
         type: string
@@ -24,6 +21,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: "Parse GitHub Variable"
+        id: repo
+        run: |
+          name=`echo ${GITHUB_REPOSITORY,,} |cut -d '/' -f 1,2 --output-delimiter='-'`
+          echo "::set-output name=::$name-tfstate"
+    
       - name: "Configure AWS Credentials"
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -34,7 +37,7 @@ jobs:
       - name: "Verify existing of S3 bucket"
         id: s3_bucket
         run: |
-          if aws s3api head-bucket --bucket "${{ github.event.inputs.bucketName }}" 2>/dev/null;
+          if aws s3api head-bucket --bucket "${{ steps.repo.outputs.bucketName }}" 2>/dev/null;
           then
             echo "::set-output name=exists::true"
             echo "S3 Bucket exists"
@@ -47,7 +50,7 @@ jobs:
         if: ${{ steps.s3_bucket.outputs.exists == 'false' }}
         run: |
           aws s3api create-bucket \
-            --bucket ${{ github.event.inputs.bucketName }} \
+            --bucket ${{ steps.repo.outputs.bucketName }} \
             --region ${{ github.event.inputs.awsRegion }} \
             --create-bucket-configuration LocationConstraint="${{ github.event.inputs.awsRegion }}" \
             --acl private
@@ -56,14 +59,14 @@ jobs:
         if: ${{ steps.s3_bucket.outputs.exists == 'false' }}
         run: |
           aws s3api put-bucket-versioning \
-          --bucket ${{ github.event.inputs.bucketName }} \
+          --bucket ${{ steps.repo.outputs.bucketName }} \
           --versioning-configuration Status=Enabled
 
       - name: "Secure S3 Bucket"
         if: ${{ steps.s3_bucket.outputs.exists == 'false' }}
         run: |
           aws s3api put-bucket-encryption \
-          --bucket ${{ github.event.inputs.bucketName }} \
+          --bucket ${{ steps.repo.outputs.bucketName }} \
           --server-side-encryption-configuration '{"Rules": [{"ApplyServerSideEncryptionByDefault": {"SSEAlgorithm": "AES256"}}]}'
 
       - name: "Check out code"
@@ -79,7 +82,7 @@ jobs:
         run: terraform init
         working-directory: ${{ env.working-directory }}
         env:
-          TF_CLI_ARGS_init:  "-backend-config=encrypt=true -backend-config=bucket=${{ github.event.inputs.bucketName }} -backend-config=region=${{ github.event.inputs.awsRegion }} -backend-config=access_key=${{ secrets.AWS_ACCESS_KEY_ID }} -backend-config=secret_key=${{ secrets.AWS_SECRET_ACCESS_KEY }} -backend-config=key=terraform.tfstate"
+          TF_CLI_ARGS_init:  "-backend-config=encrypt=true -backend-config=bucket=${{ steps.repo.outputs.bucketName }} -backend-config=region=${{ github.event.inputs.awsRegion }} -backend-config=access_key=${{ secrets.AWS_ACCESS_KEY_ID }} -backend-config=secret_key=${{ secrets.AWS_SECRET_ACCESS_KEY }} -backend-config=key=terraform.tfstate"
 
       - name: "Terraform plan"
         id: plan
