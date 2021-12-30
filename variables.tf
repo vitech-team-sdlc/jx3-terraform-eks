@@ -6,11 +6,6 @@ variable "region" {
   type        = string
 }
 
-variable "profile" {
-  description = "Profile stored in aws config or credentials file"
-  type        = string
-}
-
 variable "cluster_version" {
   description = "Kubernetes version to use for the EKS cluster."
   type        = string
@@ -123,15 +118,60 @@ variable "lets_encrypt_production" {
   default     = false
 }
 
-
 variable "nginx_chart_version" {
+  description = "Nginx Helm chart version"
   type        = string
-  description = "nginx chart version"
-  default     = "3.12.0"
+  default     = "3.34.0"
+}
+
+## Another AWS account where Domain Registered
+variable "domain_registered_in_same_aws_account" {
+  description = "Flag to use another AWS account where Domain was registered"
+  type        = bool
+  default     = false
+}
+variable "hosted_access_key" {
+  description = "Access Key for another AWS account where Domain"
+  type        = string
+  default     = ""
+}
+
+variable "hosted_secret_key" {
+  description = "Secret Key for another AWS account where Domain"
+  type        = string
+  default     = ""
 }
 
 variable "install_kuberhealthy" {
-  description = "Flag to specify if kuberhealthy operator should be installed"
+  type    = bool
+  default = true
+}
+
+variable "workers" {
+  type    = any
+  default = {}
+}
+
+variable "enable_spot_instances" {
+  description = "Enable spot instances in EKS cluster"
+  type        = bool
+  default     = true
+}
+
+variable "enable_worker_groups_launch_template" {
+  description = "Enable worker groups launch template for EKS cluster"
+  type        = bool
+  default     = true
+}
+
+variable "force_destroy_subdomain" {
+  description = "Enable to force subdomain destroy"
+  type        = bool
+  default     = true
+}
+
+variable "enable_k8s_deployment_cluster_autoscaler" {
+  description = "Enable k8s deployment cluster autoscaler"
   type        = bool
   default     = true
 }

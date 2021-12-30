@@ -1,0 +1,53 @@
+jx_bot_username                      = "AndrewsBot"
+jx_git_url                           = "https://github.com/AndrewsBot/dev-env.git"
+region                               = "us-east-2"
+cluster_name                         = "cream"
+cluster_version                      = "1.20"
+vault_user                           = ""
+force_destroy                        = true
+nginx_chart_version                  = "4.0.13"
+enable_spot_instances                = true
+enable_worker_groups_launch_template = true
+enable_tls                           = true
+force_destroy_subdomain              = true
+apex_domain                          = "sdlcvitech.com"
+subdomain                            = "dev"
+create_and_configure_subdomain       = true
+lets_encrypt_production              = false
+workers = {
+  main = {
+    k8s_labels              = ""
+    k8s_taints              = ""
+    on_demand_base_capacity = 0
+    asg_min_size            = 1
+    asg_max_size            = 10
+    asg_desired_capacity    = 2
+    root_volume_size        = 60
+    root_encrypted          = true
+    tags                    = []
+    override_instance_types = [
+      "m5.large"
+    ]
+  }
+
+  pipelines = {
+    k8s_labels              = "pipeline=true"
+    k8s_taints              = "pipelines=true:PreferNoSchedule"
+    on_demand_base_capacity = 0
+    asg_min_size            = 1
+    asg_max_size            = 1
+    asg_desired_capacity    = 1
+    root_volume_size        = 10
+    root_encrypted          = true
+    tags = [
+      {
+        key                 = "pipeline"
+        propagate_at_launch = "true"
+        value               = "true"
+      }
+    ]
+    override_instance_types = [
+      "m5.xlarge", "m5a.xlarge", "m5d.xlarge", "m5ad.xlarge", "m5n.xlarge", "m5.2xlarge", "m5a.2xlarge", "m5d.2xlarge", "m5ad.2xlarge", "m5n.2xlarge"
+    ]
+  }
+}
