@@ -1,0 +1,103 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Confingure S3 and apply Infra
+
+on:
+
+  workflow_dispatch:
+    inputs:
+      awsRegion:
+        required: true
+        type: string
+      applyInfra:
+        required: true
+        type: boolean
+      destroyInfra:
+        required: true
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Parse GitHub Variable"
+        id: repo
+        run: |
+          name=`echo ${GITHUB_REPOSITORY,,} |cut -d '/' -f 1,2 --output-delimiter='-'`
+          echo "::set-output name=::$name-tfstate"
+    
+      - name: "Configure AWS Credentials"
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ github.event.inputs.awsRegion }}
+
+      - name: "Verify existing of S3 bucket"
+        id: s3_bucket
+        run: |
+          if aws s3api head-bucket --bucket "${{ steps.repo.outputs.bucketName }}" 2>/dev/null;
+          then
+            echo "::set-output name=exists::true"
+            echo "S3 Bucket exists"
+          else
+            echo "::set-output name=exists::false"
+            echo "S3 Bucket doesn't exist"
+          fi
+
+      - name: "Create S3 Bucket"
+        if: ${{ steps.s3_bucket.outputs.exists == 'false' }}
+        run: |
+          aws s3api create-bucket \
+            --bucket ${{ steps.repo.outputs.bucketName }} \
+            --region ${{ github.event.inputs.awsRegion }} \
+            --create-bucket-configuration LocationConstraint="${{ github.event.inputs.awsRegion }}" \
+            --acl private
+
+      - name: "Enable S3 Bucket versioning"
+        if: ${{ steps.s3_bucket.outputs.exists == 'false' }}
+        run: |
+          aws s3api put-bucket-versioning \
+          --bucket ${{ steps.repo.outputs.bucketName }} \
+          --versioning-configuration Status=Enabled
+
+      - name: "Secure S3 Bucket"
+        if: ${{ steps.s3_bucket.outputs.exists == 'false' }}
+        run: |
+          aws s3api put-bucket-encryption \
+          --bucket ${{ steps.repo.outputs.bucketName }} \
+          --server-side-encryption-configuration '{"Rules": [{"ApplyServerSideEncryptionByDefault": {"SSEAlgorithm": "AES256"}}]}'
+
+      - name: "Check out code"
+        uses: actions/checkout@v2
+
+      - name: "Terraform Setup"
+        uses: hashicorp/setup-terraform@v1.2.1
+        with:
+          terraform_version: 1.0.11
+
+      - name: "Terraform init"
+        id: init
+        run: terraform init
+        working-directory: ${{ env.working-directory }}
+        env:
+          TF_CLI_ARGS_init:  "-backend-config=encrypt=true -backend-config=bucket=${{ steps.repo.outputs.bucketName }} -backend-config=region=${{ github.event.inputs.awsRegion }} -backend-config=access_key=${{ secrets.AWS_ACCESS_KEY_ID }} -backend-config=secret_key=${{ secrets.AWS_SECRET_ACCESS_KEY }} -backend-config=key=terraform.tfstate"
+
+      - name: "Terraform plan"
+        id: plan
+        run: terraform plan -lock=true -out=plan_to_apply -var=jx_bot_token=${{ secrets.ACCESS_TOKEN }}
+        working-directory: ${{ env.working-directory }}
+
+      - name: "Terraform apply"
+        if:  ${{ github.event.inputs.applyInfra == 'true'}}
+        id: apply
+        run: terraform apply plan_to_apply
+        working-directory: ${{ env.working-directory }}
+
+      - name: "Terraform destroy"
+        if:  ${{ github.event.inputs.destroyInfra == 'true' }}
+        id: destroy
+        run: terraform destroy -auto-approve=true -var=jx_bot_token=${{ secrets.ACCESS_TOKEN }}
+        working-directory: ${{ env.working-directory }}
+
