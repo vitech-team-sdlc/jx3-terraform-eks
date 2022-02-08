@@ -112,7 +112,7 @@ variable "enable_tls" {
   default     = false
 }
 
-variable "lets_encrypt_production" {
+variable "production_letsencrypt" {
   description = "Flag to use the production environment of letsencrypt in the `jx-requirements.yml` file"
   type        = bool
   default     = false

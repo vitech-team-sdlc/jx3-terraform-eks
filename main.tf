@@ -21,7 +21,7 @@ module "eks-jx" {
   create_and_configure_subdomain = var.create_and_configure_subdomain
   enable_external_dns            = var.enable_external_dns
 
-  production_letsencrypt = var.lets_encrypt_production
+  production_letsencrypt = var.production_letsencrypt
   tls_email              = var.tls_email
   enable_tls             = var.enable_tls
 
