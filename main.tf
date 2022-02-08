@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 module "eks-jx" {
-  source                  = "github.com/vitech-team-sdlc/terraform-aws-eks-jx?ref=v1.18.6-rc-9"
+  source                  = "github.com/vitech-team-sdlc/terraform-aws-eks-jx?ref=v1.18.6-rc-11"
   cluster_name            = var.cluster_name
   cluster_version         = var.cluster_version
   region                  = var.region
